@@ -1,5 +1,5 @@
 /* Should be in a more global part of the framework, here for ease atm */
-// Test with ST2
+
 Object.prototype.clone = function (){
 	function Clone() {}
     	Clone.prototype = this;
