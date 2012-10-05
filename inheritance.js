@@ -4,130 +4,81 @@
  */
 var console = console || null;
 
-var Class = function(){
-	"use strict";
-	this.id = "1000001";
-};
+var Class = {};
 
-Class.extend = function (func) {
-	"use strict";
-	var prototype = new func(),prop,parent = this;
+Object.prototype.extend = function (child) {
+//	func.apply(Class.prototype, arguments);
+	var prototype = {};
 
-	for (prop in parent) {
-        if (parent.hasOwnProperty(prop)) {
-            prototype[prop] = parent[prop];
-        }
-    }
-	func.prototype = prototype;
-	func.prototype.constructor = prototype;
-	return func;
+	if (typeof this === "function") {
+		prototype = new this(); // Start the new prototype, based on what called extend
+	}
+
+	child.apply(prototype, arguments); // Apply the childs prototype
+	prototype.base = prototype;
+
+	// I need to find a way of being able to call the base version of a fucntion.
+
+	/**
+	 * This is the constructor which then calls an init method if it exists
+	 */
+	function BaseClass() {
+		if (this.init) {
+			this.init.apply(this, arguments);
+		}
+	}
+
+	// Set the prototype
+	BaseClass.prototype = prototype;
+
+	// Ensure that what we return is able to be extended again
+	BaseClass.extend = arguments.callee;
+
+	return BaseClass;
 }
 
 var Animal = Class.extend(function(){
-	var priVar = 3;
+	this.priVar = 3;
+	this.init = function(){};
 	this.incrementPriVar = function(i){
-		priVar = priVar + (i || 1);
+		this.priVar = this.priVar + (i || 1);
 	}
 	this.getpriVar = function(){
-		return priVar;
+		return this.priVar;
 	}
 });
 
-console.log(new Animal());
-
-
-/* Simple JavaScript Inheritance
- * By John Resig http://ejohn.org/
- * MIT Licensed.
- */
-// Inspired by base2 and Prototype
-(function(){
-  var initializing = false, fnTest = /xyz/.test(function(){xyz;}) ? /\b_super\b/ : /.*/;
-  // The base Class implementation (does nothing)
-  this.Class = function(){};
-  
-  // Create a new Class that inherits from this class
-  Class.extend = function(prop) {
-    var _super = this.prototype;
-    
-    // Instantiate a base class (but only create the instance,
-    // don't run the init constructor)
-    initializing = true;
-    var prototype = new this();
-    initializing = false;
-    
-    // Copy the properties over onto the new prototype
-    for (var name in prop) {
-      // Check if we're overwriting an existing function
-      prototype[name] = typeof prop[name] == "function" && 
-        typeof _super[name] == "function" && fnTest.test(prop[name]) ?
-        (function(name, fn){
-          return function() {
-            var tmp = this._super;
-            
-            // Add a new ._super() method that is the same method
-            // but on the super-class
-            this._super = _super[name];
-            
-            // The method only need to be bound temporarily, so we
-            // remove it when we're done executing
-            var ret = fn.apply(this, arguments);        
-            this._super = tmp;
-            
-            return ret;
-          };
-        })(name, prop[name]) :
-        prop[name];
-    }
-    
-    // The dummy class constructor
-    function Class() {
-      // All construction is actually done in the init method
-      if ( !initializing && this.init )
-        this.init.apply(this, arguments);
-    }
-    
-    // Populate our constructed prototype object
-    Class.prototype = prototype;
-    
-    // Enforce the constructor to be what we expect
-    Class.prototype.constructor = Class;
-
-    // And make this class extendable
-    Class.extend = arguments.callee;
-    
-    return Class;
-  };
-})();
-
-var Person = Class.extend({
-  init: function(isDancing){
-    this.dancing = isDancing;
-  },
-  dance: function(){
-    return this.dancing;
-  }
-});
-var Ninja = Person.extend({
-  init: function(){
-    this._super( false );
-  },
-  dance: function(){
-    // Call the inherited version of dance()
-    return this._super();
-  },
-  swingSword: function(){
-    return true;
-  }
+var Dog = Animal.extend(function(){
+	this.name = "Name";
+	this.init = function(name){
+		if(name){
+			this.name = name;
+		}
+	};
+	this.updateName = function(name){
+		return this.name = this.name + "_2";
+	}
+	this.incrementPriVar = function(i){
+		
+	}
 });
 
-var p = new Person(true);
-p.dance(); // => true
+var BlackLab = Dog.extend(function(){
+	this.coat = "Black medium length";
+});
 
-var n = new Ninja();
-n.dance(); // => false
-n.swingSword(); // => true
+var snake = new Animal();
+var spot = new Dog("spot");
+var rover = new BlackLab("rover");
 
-// Should all be true
-console.log(p instanceof Person, p instanceof Class);
-console.log(n instanceof Ninja, n instanceof Person, n instanceof Class);
+console.log(spot instanceof Animal && spot instanceof Dog);
+console.log(spot);
+console.log(rover);
+spot.updateName();
+console.log(spot.name);
+console.log(rover.name);
+snake.incrementPriVar();
+spot.incrementPriVar();
+console.log(snake.priVar);
+console.log(rover.priVar);
+console.log(spot.priVar);
